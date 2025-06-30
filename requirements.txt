@@ -1,0 +1,10 @@
+streamlit
+pandas
+numpy
+matplotlib
+pycountry
+xgboost
+optuna
+statsmodels
+arch
+scipy
