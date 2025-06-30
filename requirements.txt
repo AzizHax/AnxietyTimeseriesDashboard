@@ -2,9 +2,9 @@ streamlit
 pandas
 numpy
 matplotlib
-pycountry
 xgboost
-optuna
+scikit-learn
 statsmodels
 arch
-scipy
+pycountry
+optuna
