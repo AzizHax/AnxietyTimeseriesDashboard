@@ -7,7 +7,7 @@ from sklearn.metrics import mean_squared_error
 from datetime import datetime
 
 # === SETTINGS ===
-OUT_DIR = r"C://Users//Mega-Pc//Desktop//Timeseries//blendedoutput"
+OUT_DIR = 'blendedoutput'  # Relative path for GitHub and deployment
 TITLE = "OECD Mental Health & Economic Indicators Dashboard"
 DESCRIPTION = """
 Explore the backtested forecasts and performance metrics for anxiety trends across OECD countries.  
@@ -24,7 +24,7 @@ def get_latest_update(country_dir):
         files = [os.path.join(country_dir, f) for f in os.listdir(country_dir)]
         latest_file = max(files, key=os.path.getmtime)
         update_date = datetime.fromtimestamp(os.path.getmtime(latest_file))
-        return update_date.strftime("%Y-%m-%d %H:%M")
+        return update_date.strftime("%d/%m/%Y %H:%M")  # Day/Month/Year Hour:Minute
     except:
         return "Unknown"
 
@@ -51,23 +51,20 @@ def display_metrics(wf_df):
     col3.metric("Blend MAPE", f"{blend_mape:.2f}%")
     col3.metric("Blend Ratio", f"{blend_ratio:.2f}")
 
-# --- Plotting function ---
-def plot_backtest(wf_df, save_path):
-    # If you have columns named as in display_metrics, this works directly
+def plot_backtest(wf_df, save_path, country):
     dates = wf_df.index
     obs = wf_df['actual']
     sarimax = wf_df['forecast']
     xgb = wf_df['xgb_pred']
     blend = wf_df['blend_pred']
-    # Optional: If you have CI columns, update names here, else comment out
+
+    ci = False
     if 'garch_lower' in wf_df and 'garch_upper' in wf_df:
         lower_ci = wf_df['garch_lower']
         upper_ci = wf_df['garch_upper']
         ci = True
-    else:
-        ci = False
 
-    fig, ax = plt.subplots(figsize=(14, 7))
+    fig, ax = plt.subplots(figsize=(8, 4))  # Smaller figure size
     ax.plot(dates, obs, label='Obs')
     ax.plot(dates, sarimax, label='SARIMAX Forecast')
     ax.plot(dates, xgb, label='XGBoost')
@@ -77,9 +74,9 @@ def plot_backtest(wf_df, save_path):
     ax.legend()
     ax.set_xlabel('Date')
     ax.set_ylabel('Value')
-    ax.set_title('AT SARIMAX+GARCH & XGBoost Blend Backtest', pad=30)  # Enough padding!
+    ax.set_title(f'{country} SARIMAX+GARCH & XGBoost Blend Backtest', pad=20)
     plt.tight_layout()
-    plt.savefig(save_path, bbox_inches='tight', pad_inches=0.4)
+    plt.savefig(save_path, bbox_inches='tight', pad_inches=0.3)
     plt.close()
 
 # === STREAMLIT DASHBOARD ===
@@ -106,8 +103,8 @@ if os.path.exists(wf_path):
     st.subheader("Forecast Performance Metrics")
     display_metrics(wf_df)
 
-    # Always regenerate plot to avoid cropping (or check if you want to overwrite)
-    plot_backtest(wf_df, backtest_img)
+    # Regenerate the backtest plot (optional: avoid re-plotting if not needed)
+    plot_backtest(wf_df, backtest_img, country)
 else:
     st.warning("Metrics not found for this country.")
     wf_df = None
