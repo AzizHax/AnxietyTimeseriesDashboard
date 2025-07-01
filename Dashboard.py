@@ -8,16 +8,20 @@ from datetime import datetime
 
 # === SETTINGS ===
 OUT_DIR = "blendedoutput"
- # Relative path for GitHub and deployment
 TITLE = "OECD Mental Health & Economic Indicators Dashboard"
 DESCRIPTION = """
 Explore the backtested forecasts and performance metrics for anxiety trends across OECD countries.  
 Compare SARIMAX-GARCH, XGBoost, and their blend, with confidence intervals and key metrics.
 """
 
+# --- Get available countries from output directory ---
 def get_available_countries(out_dir):
+    print("DEBUG: OUT_DIR =", out_dir)
+    print("DEBUG: Current working directory:", os.getcwd())
     if not os.path.exists(out_dir):
+        print("DEBUG: blendedoutput does NOT exist!")
         return []
+    print("DEBUG: blendedoutput found. Contents:", os.listdir(out_dir))
     return sorted([d for d in os.listdir(out_dir) if os.path.isdir(os.path.join(out_dir, d))])
 
 def get_latest_update(country_dir):
@@ -25,7 +29,7 @@ def get_latest_update(country_dir):
         files = [os.path.join(country_dir, f) for f in os.listdir(country_dir)]
         latest_file = max(files, key=os.path.getmtime)
         update_date = datetime.fromtimestamp(os.path.getmtime(latest_file))
-        return update_date.strftime("%d/%m/%Y %H:%M")  # Day/Month/Year Hour:Minute
+        return update_date.strftime("%Y-%m-%d %H:%M")
     except:
         return "Unknown"
 
@@ -52,34 +56,6 @@ def display_metrics(wf_df):
     col3.metric("Blend MAPE", f"{blend_mape:.2f}%")
     col3.metric("Blend Ratio", f"{blend_ratio:.2f}")
 
-def plot_backtest(wf_df, save_path, country):
-    dates = wf_df.index
-    obs = wf_df['actual']
-    sarimax = wf_df['forecast']
-    xgb = wf_df['xgb_pred']
-    blend = wf_df['blend_pred']
-
-    ci = False
-    if 'garch_lower' in wf_df and 'garch_upper' in wf_df:
-        lower_ci = wf_df['garch_lower']
-        upper_ci = wf_df['garch_upper']
-        ci = True
-
-    fig, ax = plt.subplots(figsize=(8, 4))  # Smaller figure size
-    ax.plot(dates, obs, label='Obs')
-    ax.plot(dates, sarimax, label='SARIMAX Forecast')
-    ax.plot(dates, xgb, label='XGBoost')
-    ax.plot(dates, blend, label='Blend')
-    if ci:
-        ax.fill_between(dates, lower_ci, upper_ci, color='purple', alpha=0.3, label='GARCH CI')
-    ax.legend()
-    ax.set_xlabel('Date')
-    ax.set_ylabel('Value')
-    ax.set_title(f'{country} SARIMAX+GARCH & XGBoost Blend Backtest', pad=20)
-    plt.tight_layout()
-    plt.savefig(save_path, bbox_inches='tight', pad_inches=0.3)
-    plt.close()
-
 # === STREAMLIT DASHBOARD ===
 st.set_page_config(page_title=TITLE, layout="wide")
 st.title(TITLE)
@@ -96,22 +72,19 @@ country_dir = os.path.join(OUT_DIR, country)
 
 # --- Load walkforward and show metrics ---
 wf_path = os.path.join(country_dir, 'walkforward_garch_xgb_blend.csv')
-backtest_img = os.path.join(country_dir, 'backtest_garch_xgb_blend.png')
-forecast_img = os.path.join(country_dir, 'forecast_5year.png')
-
 if os.path.exists(wf_path):
     wf_df = pd.read_csv(wf_path, index_col=0, parse_dates=True)
     st.subheader("Forecast Performance Metrics")
     display_metrics(wf_df)
-
-    # Regenerate the backtest plot (optional: avoid re-plotting if not needed)
-    plot_backtest(wf_df, backtest_img, country)
 else:
     st.warning("Metrics not found for this country.")
     wf_df = None
 
 # --- Show plots side-by-side ---
 st.subheader("Forecast Visualizations")
+
+backtest_img = os.path.join(country_dir, 'backtest_garch_xgb_blend.png')
+forecast_img = os.path.join(country_dir, 'forecast_5year.png')
 
 col1, col2 = st.columns(2)
 
