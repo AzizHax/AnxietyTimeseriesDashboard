@@ -39,11 +39,11 @@ def display_metrics(wf_df):
     xgb = wf_df['xgb_pred']
     blend = wf_df['blend_pred']
 
-    sarimax_rmse = mean_squared_error(actual, sarimax, squared=False)
+    sarimax_rmse = np.sqrt(mean_squared_error(actual, sarimax))
     sarimax_mape = np.mean(np.abs((actual - sarimax) / actual)) * 100
-    xgb_rmse = mean_squared_error(actual, xgb, squared=False)
+    xgb_rmse = np.sqrt(mean_squared_error(actual, xgb))
     xgb_mape = np.mean(np.abs((actual - xgb) / actual)) * 100
-    blend_rmse = mean_squared_error(actual, blend, squared=False)
+    blend_rmse = np.sqrt(mean_squared_error(actual, blend))
     blend_mape = np.mean(np.abs((actual - blend) / actual)) * 100
     blend_ratio = np.nanmean((blend - xgb) / (sarimax - xgb + 1e-8))  # fallback
 
@@ -55,6 +55,7 @@ def display_metrics(wf_df):
     col3.metric("Blend RMSE", f"{blend_rmse:.2f}")
     col3.metric("Blend MAPE", f"{blend_mape:.2f}%")
     col3.metric("Blend Ratio", f"{blend_ratio:.2f}")
+
 
 # === STREAMLIT DASHBOARD ===
 st.set_page_config(page_title=TITLE, layout="wide")
