@@ -7,7 +7,8 @@ from sklearn.metrics import mean_squared_error
 from datetime import datetime
 
 # === SETTINGS ===
-OUT_DIR = 'blendedoutput'  # Relative path for GitHub and deployment
+OUT_DIR = "blendedoutput"
+ # Relative path for GitHub and deployment
 TITLE = "OECD Mental Health & Economic Indicators Dashboard"
 DESCRIPTION = """
 Explore the backtested forecasts and performance metrics for anxiety trends across OECD countries.  
